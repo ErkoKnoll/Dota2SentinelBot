@@ -1,0 +1,205 @@
+﻿{
+  "connectionString": "User ID=admin;Password=1234;Host=localhost;Port=5432;Database=Dota2Sentinel;Pooling=true;", //Postgres database connection string, make sure to use password, otherwise throws an error. Create only a blank database, tables will be created automatically.
+  "privateChat": "Dota2SentinelAdmin", //Admin chat where bot joins and prints out game results and who were banned.
+  "admins": [ 74261198028839539 ], //Steam IDs of the admins who can use admin commands.
+  "coordinatorBot": { //Dota account for coordinator bot which listens for commands in public chats. Account must be non-limited account and at least level 5 due to a need to use a public chat. Steam guard must be turned off, otherwise login may fail.
+    "userName": "user",
+    "password": "password"
+  },
+  "coordinatorUrl": "http://localhost:5000", //Host's URL, don't change unless you change Kestrel's default port.
+  "lobbyBotPath": "C:\\Dota2Sentinel\\LobbyBot\\Dota2SentinelLobbyBot.exe", //Path to lobby bot exe.
+  "matchCheckMinDuration": 10, //If the match lasts less than 10 minutes then void it.
+  "matchCheckMaxDuration": 180, //If the match lasts more than 180 hours then void it.
+  "lobbyBotsPool": [ //Accounts for lobby bots. There can be multiple bots. If you expect hight traffic add more accounts, since if one bot is already is hosting a lobby then another bot is needed. Steam guard must be turned off, otherwise login may fail.
+    {
+      "userName": "user",
+      "password": "password",
+      "magicNumber": "16746744069414584320" //Magic number that is needed for computing a number for declinign a match, if you get it wrong then the Game Coordinator won't accept the decline command and bot has to time out instead. Read more: https://github.com/ThorConzales/Dota2SentinelBot/wiki/Generating-Magic-Number.
+    }
+  ],
+  "games": [ //List of custom games that the bot supports
+    {
+      "name": "Dota 10v10",
+      "chat": "498108721", //Use customGameMode value here to have the bot joined to custom game's public chat. Specify your own chat name to have the bot joined to private channel.
+      "gameMode": 15, //Value from network protobuf packet GCPracticeLobbyCreate->body->lobby_details->game_mode
+      "maps": [
+        {
+          "name": "Dota 10v10",
+          "mapId": "dota", //Value from network protobuf packet GCPracticeLobbyCreate->body->lobby_details->custom_map_name. !!!Limitation, different games cannot have the same mapId, mapId currently has to be unique for all custom games!!!
+          "minPlayers": 1,
+          "maxPlayers": 20,
+          "solo": false //If the map is FFA
+        }
+      ],
+      "customGameMode": 498108721, //Value from network protobuf packet GCPracticeLobbyCreate->body->lobby_details->custom_game_mode.
+      "customGameCrc": 5825445734172451707, //Value from network protobuf packet GCPracticeLobbyCreate->body->lobby_details->custom_game_crc. If the game is updated you must update this value too, otherwise nobody will join the lobby, other than those who joined through the chat join link.
+      "customGameTimestamp": 1485913934, //Value from network protobuf packet GCPracticeLobbyCreate->body->lobby_details->custom_game_timestamp.
+      "teams": 2, //Value from network protobuf packet GCPracticeLobbyCreate->body->lobby_details->team_details array length. Seems to be always 2, regardless how many teams there actually is.
+      "banDurationLeave": 144, //Max ban duration in hours for leaving the game.
+      "variableLeaveBan": true, //Assign less ban duration for those who stayed longer in the game.
+      "VariableLeaveBanThreshold": 0.2, //Don't ban those who stayed in the game for 80% or more of total duration. (Calculated based on gold spent vs team gold spent, could use smarter detection).
+      "playerMinGamesRequired": 20, //Kick players who have played less than 20 standard Dota games, to keep out ban evaders. Max value is 20.
+      "lobbyTimeout": 10, //Leave the lobby if it hasen't gotten full in 10 minutes.
+      "lobbyInfoMessage": "This lobby is hosted by the Sentinel Bot. Players who leave will be auto banned from the Sentinel network.",
+      "newAccountKickMessage": "Kicked {0}. Reason: new account - possible ban evader.",
+      "bannedAccountKickMessage": "Kicked banned user {0}. Ban reason: {1}. Ban expires: {2} UTC.",
+      "lobbyTimeoutMessage": "Lobby timed out. This lobby is no longer tracked by the Sentinel Bot. Feel free to request a new lobby using !host command.",
+      "botLeaveMessage": "Unfortunately I cannot accept the match. I will leave the match but I will keep tracking it, so please don't quit!",
+      "accountStatsMessage": "{0}, you have played {1} games with the Sentinel Bot and were banned in {2} games.",
+      "helpMessage": "{0}, use !lobbies to find existing lobbies, !host to host a new lobby and !me to check your status. Use them in Dota 10v10 chat.",
+      "commandNotAllowedMessage": "{0}, this command is not allowed in this chat. Please use it in Dota 10v10 chat."
+    },
+    {
+      "name": "Overthrow",
+      "chat": "OverthrowPrivateChannel", //Use customGameMode value here to have the bot joined to custom game's public chat. Specify your own chat name to have the bot joined to private channel.
+      "gameMode": 15, //Value from network protobuf packet GCPracticeLobbyCreate->body->lobby_details->game_mode.
+      "maps": [
+        {
+          "name": "Forest Solo",
+          "mapId": "forest_solo", //Value from network protobuf packet GCPracticeLobbyCreate->body->lobby_details->custom_map_name. !!!Limitation, different games cannot have the same mapId, mapId currently has to be unique for all custom games!!!
+          "chatId": "1", //Map id that must be unique for given custom game to be used in host command. !host [region] [mapId]<-- goes here.
+          "minPlayers": 1,
+          "maxPlayers": 10,
+          "solo": true //If the map is FFA.
+        },
+        {
+          "name": "Desert Duo",
+          "mapId": "desert_duo", //Value from network protobuf packet GCPracticeLobbyCreate->body->lobby_details->custom_map_name. !!!Limitation, different games cannot have the same mapId, mapId currently has to be unique for all custom games!!!
+          "chatId": "2", //Map id that must be unique for given custom game to be used in host command. !host [region] [mapId]<-- goes here.
+          "minPlayers": 1,
+          "maxPlayers": 10,
+          "solo": false //If the map is FFA.
+        },
+        {
+          "name": "Mines Trio",
+          "mapId": "mines_trio", //Value from network protobuf packet GCPracticeLobbyCreate->body->lobby_details->custom_map_name. !!!Limitation, different games cannot have the same mapId, mapId currently has to be unique for all custom games!!!
+          "chatId": "3", //Map id that must be unique for given custom game to be used in host command. !host [region] [mapId]<-- goes here.
+          "minPlayers": 1,
+          "maxPlayers": 9,
+          "solo": false //If the map is FFA.
+        },
+        {
+          "name": "Temple Quartet",
+          "mapId": "temple_quartet", //Value from network protobuf packet GCPracticeLobbyCreate->body->lobby_details->custom_map_name. !!!Limitation, different games cannot have the same mapId, mapId currently has to be unique for all custom games!!!
+          "chatId": "4", //Map id that must be unique for given custom game to be used in host command. !host [region] [mapId]<-- goes here.
+          "minPlayers": 1,
+          "maxPlayers": 16,
+          "solo": false //If the map is FFA.
+        },
+        {
+          "name": "Desert Quintet",
+          "mapId": "desert_quintet", //Value from network protobuf packet GCPracticeLobbyCreate->body->lobby_details->custom_map_name. !!!Limitation, different games cannot have the same mapId, mapId currently has to be unique for all custom games!!!
+          "chatId": "5", //Map id that must be unique for given custom game to be used in host command. !host [region] [mapId]<-- goes here.
+          "minPlayers": 1,
+          "maxPlayers": 15,
+          "solo": false //If the map is FFA.
+        }
+      ],
+      "customGameMode": 455312245, //Value from network protobuf packet GCPracticeLobbyCreate->body->lobby_details->custom_game_mode.
+      "customGameCrc": 3992466599481542079, //Value from network protobuf packet GCPracticeLobbyCreate->body->lobby_details->custom_game_crc. If the game is updated you must update this value too, otherwise nobody will join the lobby, other than those who joined through the chat join link.
+      "customGameTimestamp": 1485913770, //Value from network protobuf packet GCPracticeLobbyCreate->body->lobby_details->custom_game_timestamp. If the game is updated you must update this value too, otherwise nobody will join the lobby, other than those who joined through the chat join link.
+      "teams": 2, //Value from network protobuf packet GCPracticeLobbyCreate->body->lobby_details->team_details array length. Seems to be always 2, regardless how many teams there actually is.
+      "banDurationLeave": 72, //Max ban duration in hours for leaving the game.
+      "variableLeaveBan": true, //Assign less ban duration for those who stayed longer in the game.
+      "VariableLeaveBanThreshold": 0.2, //Don't ban those who stayed in the game for 80% or more of total duration. (Calculated based on gold spent vs team gold spent, could use smarter detection)
+      "playerMinGamesRequired": 20, //Kick players who have played less than 20 standard Dota games, to keep out ban evaders. Max value is 20.
+      "lobbyTimeout": 10, //Leave the lobby if it hasen't gotten full in 10 minutes.
+      "lobbyInfoMessage": "This lobby is hosted by the Sentinel Bot. Players who leave will be auto banned from the Sentinel network.",
+      "newAccountKickMessage": "Kicked {0}. Reason: new account - possible ban evader.",
+      "bannedAccountKickMessage": "Kicked banned user {0}. Ban reason: {1}. Ban expires: {2} UTC.",
+      "lobbyTimeoutMessage": "Lobby timed out. This lobby is no longer tracked by the Sentinel Bot. Feel free to request a new lobby using !host command.",
+      "botLeaveMessage": "Unfortunately I cannot accept the match. I will leave the match but I will keep tracking it, so please don't quit!",
+      "accountStatsMessage": "{0}, you have played {1} games with the Sentinel Bot and were banned in {2} games.",
+      "helpMessage": "{0}, use !lobbies to find existing lobbies, !host to host a new lobby and !me to check your status. Use them in Dota 10v10 chat.",
+      "commandNotAllowedMessage": "{0}, this command is not allowed in this chat. Please use it in Dota 10v10 chat."
+    }
+  ],
+  "serverRegions": [
+    {
+      "longName": "US West",
+      "shortName": "usw",
+      "serverId": 1
+    },
+    {
+      "longName": "US East",
+      "shortName": "use",
+      "serverId": 2
+    },
+    {
+      "longName": "Luxembourg",
+      "shortName": "lux",
+      "serverId": 3
+    },
+    {
+      "longName": "Singapore",
+      "shortName": "sing",
+      "serverId": 5
+    },
+    {
+      "longName": "Dubai",
+      "shortName": "dub",
+      "serverId": 6
+    },
+    {
+      "longName": "Stockholm",
+      "shortName": "sto",
+      "serverId": 8
+    },
+    {
+      "longName": "Brazil",
+      "shortName": "bra",
+      "serverId": 10
+    },
+    {
+      "longName": "Austria",
+      "shortName": "au",
+      "serverId": 9
+    },
+    {
+      "longName": "Australia",
+      "shortName": "aus",
+      "serverId": 7
+    },
+    {
+      "longName": "South Africa",
+      "shortName": "saf",
+      "serverId": 11
+    },
+    {
+      "longName": "Chile",
+      "shortName": "chi",
+      "serverId": 14
+    },
+    {
+      "longName": "Peru",
+      "shortName": "peru",
+      "serverId": 15
+    },
+    {
+      "longName": "India",
+      "shortName": "in",
+      "serverId": 16
+    },
+    {
+      "longName": "Japan",
+      "shortName": "jap",
+      "serverId": 19
+    }
+  ],
+  "busyMessage": "{0}, I'm currently busy hosting lobbies. Use !lobbies to find existing lobbies.",
+  "lobbyAlreadyQueued": "{0}, lobby in {1} is already queued for hosting, please wait a bit.",
+  "lobbyAlreadyHosted": "{0}, lobby in {1} is already hosted. If it is full it may take a couple of seconds before a new lobby can be hosted.",
+  "lobbyRequesterBanned": "{0}, cannot host a lobby for you since you are currently banned.",
+  "lobbyRequesterHasHost": "{0}, you already have {1} lobby hosted.",
+  "hostingNoLobbiesMessage": "{0}, currently hosting no lobbies. Feel free to host a new one using !host command.",
+  "hostingLobby": "Hosting {0} lobby in {1}:",
+  "lobbyQueuedMessage": "{0} lobby queued in {1}.",
+  "noAccountMessage": "{0}, you don't have registered account with the Sentinel Bot. To register an account please join Sentinel hosted lobby. Use !lobbies to find existing lobbies or !host to host a new lobby.",
+  "accountStatsMessage": "{0}, you have played {1} games with the Sentinel Bot and were banned in {2} games.",
+  "accountBannedMessage": " Currenty banned until {0}. Reason: {1}.",
+  "newAccountMessage": "Your account is too new to join Sentinel hosted lobbies.",
+  "helpMessage": "{0}, use !lobbies to find existing lobbies, !host to host a new lobby and !me to check your status.",
+  "lobbiesCommandNotAllowed": "{0}, requesting existing lobbies in this channel is not allowed, please request existing lobbies in custom game's public channel.",
+  "mapNotFoundMessage": "{0}, specified map was not found: Valid maps are: {1}.",
+  "specifyMapMessage": "{0}, and you can specify map too. Maps: {1}. For example !host {2} {3}. If not specified then the map is randomly picked."
+}
